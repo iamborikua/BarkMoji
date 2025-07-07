@@ -1,0 +1,148 @@
+/* 1. Global font and text styles */
+body, #root, input, textarea, button, select {
+  font-family: 'Fredoka', cursive, Arial, sans-serif !important;
+  color: #7A4F13;
+}
+
+h1, h2, h3, h4, h5, h6, .font-bold, .font-extrabold, .button, .button-main, .button-secondary, .profile-modal-btn-save, .profile-modal-btn-cancel {
+  font-family: 'Fredoka', cursive, Arial, sans-serif !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.01em;
+  color: #7A4F13;
+  text-shadow: 0 2px 8px #fff6e5cc;
+}
+
+label {
+  font-family: 'Fredoka', cursive, Arial, sans-serif !important;
+  font-weight: 600;
+  color: #F9B233;
+  font-size: 1.08rem;
+}
+
+input, textarea {
+  font-family: 'Fredoka', cursive, Arial, sans-serif !important;
+  font-weight: 500;
+}
+
+/* 2. Responsive containers and safe area */
+html, body {
+  min-height: 100vh;
+  background: transparent !important;
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-top: env(safe-area-inset-top);
+}
+#root {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 0 0.5rem;
+}
+
+/* 3. Button styles (unified) */
+.button, .profile-modal-btn-save, .profile-modal-btn-cancel, .button-main, .button-secondary {
+  display: inline-block;
+  border-radius: 2.5rem;
+  font-weight: 700;
+  font-size: 1.18rem;
+  padding: 1rem 2.6rem;
+  box-shadow: 0 2px 16px 0 #f9b23333;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s, color 0.2s;
+  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
+}
+.button, .button-main, .profile-modal-btn-save {
+  background: linear-gradient(90deg, #f9b233 0%, #fbbf24 40%, #f472b6 100%);
+  color: #fff;
+}
+.button-secondary, .profile-modal-btn-cancel {
+  background: rgba(255,255,255,0.92);
+  color: #7A4F13;
+  border: 2px solid #fbbf24cc;
+}
+.button:hover, .button:focus, .button-main:hover, .button-main:focus, .profile-modal-btn-save:hover, .profile-modal-btn-save:focus {
+  background: linear-gradient(90deg, #fbbf24 0%, #f472b6 100%);
+  color: #fff6e5;
+  box-shadow: 0 4px 24px 0 #fbbf2444;
+}
+.button-secondary:hover, .button-secondary:focus, .profile-modal-btn-cancel:hover, .profile-modal-btn-cancel:focus {
+  background: #fff6e5;
+  color: #f472b6;
+  box-shadow: 0 4px 18px 0 #fbbf2444;
+}
+.button:active, .button-main:active, .profile-modal-btn-save:active, .button-secondary:active, .profile-modal-btn-cancel:active {
+  transform: scale(0.96);
+}
+
+/* 4. Inputs and textareas */
+.input-profile, input[type="text"], input[type="number"], input[type="email"], textarea {
+  width: 100%;
+  padding: 1.05rem 1.3rem;
+  border-radius: 2.5rem;
+  border: 1.8px solid #fbbf24cc;
+  background: rgba(255,255,255,0.55);
+  font-size: 1.13rem;
+  margin-bottom: 0.7rem;
+  text-align: center;
+  transition: border 0.2s, box-shadow 0.2s, background 0.2s;
+  box-shadow: 0 2px 16px 0 #f9b23322, 0 1.5px 0 #fff6e5cc, inset 0 1.5px 8px #fbbf2433;
+  outline: none;
+  color: #7A4F13;
+  font-family: 'Fredoka', cursive, Arial, sans-serif;
+  font-weight: 600;
+  backdrop-filter: blur(6px) saturate(1.2);
+}
+.input-profile:focus, input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus, textarea:focus {
+  border: 2.2px solid #f472b6;
+  background: rgba(255,255,255,0.85);
+  box-shadow: 0 0 0 5px #fbbf2433, 0 2px 16px 0 #f9b23322, 0 1.5px 0 #fff6e5cc, inset 0 1.5px 8px #fbbf2433;
+}
+.input-profile::placeholder, input[type="text"]::placeholder, input[type="number"]::placeholder, input[type="email"]::placeholder, textarea::placeholder {
+  color: #d6b98c;
+  opacity: 1;
+  font-weight: 500;
+  font-family: 'Fredoka', cursive, Arial, sans-serif;
+  letter-spacing: 0.01em;
+}
+textarea, .input-profile[type="textarea"], .input-profile-textarea, textarea.input-profile {
+  min-height: 3.2rem;
+  border-radius: 2rem !important;
+  resize: none;
+  padding-top: 1.1rem;
+  padding-bottom: 1.1rem;
+}
+
+/* 5. Cards and modals */
+.glass-card, .profile-modal-card, .card, .modal {
+  backdrop-filter: blur(24px) saturate(1.2);
+  background: rgba(255, 255, 255, 0.28);
+  border: 1.5px solid rgba(255,255,255,0.35);
+  box-shadow: 0 8px 32px 0 rgba(41, 30, 10, 0.12);
+  border-radius: 2.5rem;
+  padding: 1.5rem;
+  }
+
+/* 6. Accessibility and tap targets */
+.button, .profile-modal-btn-save, .profile-modal-btn-cancel, .button-main, .button-secondary {
+  min-width: 44px;
+  min-height: 44px;
+}
+.a11y-focus:focus, .button:focus, .profile-modal-btn-save:focus, .profile-modal-btn-cancel:focus {
+  outline: 2px solid #F9B233;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px #fff6e5cc;
+  border-radius: 2.5rem;
+  }
+
+/* 7. Utility for mobile spacing */
+.px-mobile {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+.pt-mobile {
+  padding-top: 1.5rem;
+}
+.pb-mobile {
+  padding-bottom: 2.5rem;
+}

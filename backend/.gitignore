@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# production
+/dist
+
+# misc
+.DS_Store
+.env
+.env.*
+
+# SQLite database
+*.sqlite
+*.db
+
+# local IDE/editor
+.vscode/
+.idea/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log* 
