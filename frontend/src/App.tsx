@@ -358,21 +358,24 @@ function MainApp() {
       analyserRef.current = analyser;
       source.connect(analyser);
       const dataArray = new Uint8Array(analyser.fftSize);
+      const frequencyArray = new Uint8Array(analyser.frequencyBinCount);
       let barkFound = false;
       let barkPitch = 0;
       let barkVolume = 0;
       let barkStart = 0;
       let barkEnd = 0;
       let lastAboveThreshold = 0;
-      const THRESHOLD = 0.13; // Bark volume threshold
-      const MIN_BARK_DURATION = 80; // ms
-      const MAX_BARK_DURATION = 800; // ms
-      const BARK_FREQ_MIN = 250; // Hz
-      const BARK_FREQ_MAX = 1200; // Hz
+      let barkIntensity = 0;
+      let barkFrequencyProfile: number[] = [];
+      const THRESHOLD = 0.08; // Lowered threshold for better detection
+      const MIN_BARK_DURATION = 100; // ms
+      const MAX_BARK_DURATION = 1000; // ms
+      const BARK_FREQ_MIN = 200; // Hz - broader range
+      const BARK_FREQ_MAX = 1500; // Hz
       const sampleRate = audioContext.sampleRate;
 
       function autoCorrelate(buf: Uint8Array, sampleRate: number) {
-        // Basic autocorrelation for pitch detection
+        // Improved autocorrelation for pitch detection
         let SIZE = buf.length;
         let rms = 0;
         for (let i = 0; i < SIZE; i++) {
@@ -381,7 +384,19 @@ function MainApp() {
         }
         rms = Math.sqrt(rms / SIZE);
         if (rms < 0.01) return -1;
-        let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+        
+        // Find zero crossings for better pitch detection
+        let zeroCrossings = 0;
+        for (let i = 1; i < SIZE; i++) {
+          if ((buf[i] - 128) * (buf[i-1] - 128) < 0) {
+            zeroCrossings++;
+          }
+        }
+        
+        // Use zero crossing rate as a fallback
+        if (zeroCrossings < 4) return -1;
+        
+        let r1 = 0, r2 = SIZE - 1, thres = 0.15;
         for (let i = 0; i < SIZE / 2; i++) {
           if (Math.abs((buf[i] - 128) / 128) < thres) { r1 = i; break; }
         }
@@ -390,6 +405,8 @@ function MainApp() {
         }
         buf = buf.slice(r1, r2);
         SIZE = buf.length;
+        if (SIZE < 64) return -1;
+        
         let c = new Array(SIZE).fill(0);
         for (let i = 0; i < SIZE; i++) {
           for (let j = 0; j < SIZE - i; j++) {
@@ -406,6 +423,20 @@ function MainApp() {
         return sampleRate / T0;
       }
 
+      function getFrequencyProfile() {
+        analyser.getByteFrequencyData(frequencyArray);
+        const profile = [];
+        for (let i = 0; i < frequencyArray.length; i++) {
+          if (frequencyArray[i] > 128) {
+            const freq = i * sampleRate / analyser.fftSize;
+            if (freq >= BARK_FREQ_MIN && freq <= BARK_FREQ_MAX) {
+              profile.push(freq);
+            }
+          }
+        }
+        return profile;
+      }
+
       const checkVolume = () => {
         analyser.getByteTimeDomainData(dataArray);
         // Calculate RMS (root mean square) volume
@@ -415,6 +446,7 @@ function MainApp() {
           sum += val * val;
         }
         const rms = Math.sqrt(sum / dataArray.length);
+        
         // Only analyze if above threshold
         if (rms > THRESHOLD) {
           if (!barkFound) {
@@ -422,15 +454,23 @@ function MainApp() {
             barkFound = true;
             // Estimate pitch
             const pitch = autoCorrelate(dataArray, sampleRate);
-            barkPitch = pitch;
+            barkPitch = pitch > 0 ? pitch : 500; // Default to mid-range if detection fails
             barkVolume = rms;
+            barkIntensity = rms;
+            barkFrequencyProfile = getFrequencyProfile();
+          } else {
+            // Update intensity during bark
+            barkIntensity = Math.max(barkIntensity, rms);
+            const newProfile = getFrequencyProfile();
+            barkFrequencyProfile = [...barkFrequencyProfile, ...newProfile];
           }
           lastAboveThreshold = performance.now();
         } else {
-          if (barkFound && (performance.now() - lastAboveThreshold > 40)) {
+          if (barkFound && (performance.now() - lastAboveThreshold > 50)) {
             barkEnd = performance.now();
             const duration = barkEnd - barkStart;
-            // Bark must be short and in dog pitch range
+            
+            // Bark must be in reasonable duration and frequency range
             if (
               duration > MIN_BARK_DURATION &&
               duration < MAX_BARK_DURATION &&
@@ -440,17 +480,77 @@ function MainApp() {
               setBarkDetected(true);
               setProcessingMsg(`Sniffing the air... Reading ${capitalizeFirst(dogName) ? capitalizeFirst(dogName) + "'s" : "your dog's"} bark and decoding the doggy drama!`);
               setScreen('processing');
+              
               setTimeout(() => {
                 stopRecording();
-                // Mood rules: high pitch = playful, low pitch = warning, mid = sassy
+                
+                // Enhanced mood analysis based on multiple bark characteristics
                 let moodType = 'chaotic';
-                if (barkPitch > 800) moodType = 'playful';
-                else if (barkPitch < 400) moodType = 'suspicious';
-                else if (barkVolume > 0.2) moodType = 'rebellious';
-                else moodType = 'sassy';
-                // Pick a random mood from that type, fallback to any
+                const avgFreq = barkFrequencyProfile.length > 0 ? 
+                  barkFrequencyProfile.reduce((a, b) => a + b, 0) / barkFrequencyProfile.length : barkPitch;
+                
+                // Analyze bark characteristics
+                const isHighPitch = barkPitch > 800 || avgFreq > 800;
+                const isLowPitch = barkPitch < 400 || avgFreq < 400;
+                const isLoud = barkVolume > 0.15 || barkIntensity > 0.15;
+                const isLong = duration > 500;
+                const isIntense = barkIntensity > 0.2;
+                const hasComplexFreq = barkFrequencyProfile.length > 10;
+                
+                // Determine mood based on bark characteristics
+                if (isHighPitch && isLoud) {
+                  moodType = 'excited';
+                } else if (isHighPitch && !isLoud) {
+                  moodType = 'playful';
+                } else if (isLowPitch && isLoud) {
+                  moodType = 'protective';
+                } else if (isLowPitch && !isLoud) {
+                  moodType = 'suspicious';
+                } else if (isLong && isIntense) {
+                  moodType = 'demanding';
+                } else if (isLong && !isIntense) {
+                  moodType = 'dramatic';
+                } else if (hasComplexFreq && isLoud) {
+                  moodType = 'chaotic';
+                } else if (hasComplexFreq && !isLoud) {
+                  moodType = 'confused';
+                } else if (barkVolume > 0.2) {
+                  moodType = 'rebellious';
+                } else if (duration < 200) {
+                  moodType = 'sassy';
+                } else {
+                  // Random selection from common moods if no clear pattern
+                  const commonMoods = ['playful', 'sassy', 'dramatic', 'chaotic', 'excited'];
+                  moodType = commonMoods[Math.floor(Math.random() * commonMoods.length)];
+                }
+                
+                // Pick a random mood from that type, with fallback to any mood
                 const filtered = MOODS.filter(m => m.mood === moodType);
-                const mood = filtered.length > 0 ? filtered[Math.floor(Math.random() * filtered.length)] : getRandomMood();
+                let mood;
+                if (filtered.length > 0) {
+                  mood = filtered[Math.floor(Math.random() * filtered.length)];
+                } else {
+                  // If no moods of that type, pick from similar moods
+                  const similarMoods = {
+                    'playful': ['playful', 'excited', 'chaotic'],
+                    'suspicious': ['suspicious', 'protective', 'paranoid'],
+                    'demanding': ['demanding', 'rebellious', 'dramatic'],
+                    'protective': ['protective', 'suspicious', 'rebellious'],
+                    'excited': ['excited', 'playful', 'chaotic'],
+                    'dramatic': ['dramatic', 'demanding', 'rebellious'],
+                    'chaotic': ['chaotic', 'playful', 'excited'],
+                    'confused': ['confused', 'sassy', 'chaotic'],
+                    'sassy': ['sassy', 'dramatic', 'playful'],
+                    'rebellious': ['rebellious', 'demanding', 'protective']
+                  };
+                  
+                  const fallbackTypes = similarMoods[moodType as keyof typeof similarMoods] || ['playful', 'sassy', 'dramatic'];
+                  const fallbackMoods = MOODS.filter(m => fallbackTypes.includes(m.mood));
+                  mood = fallbackMoods.length > 0 ? 
+                    fallbackMoods[Math.floor(Math.random() * fallbackMoods.length)] : 
+                    getRandomMood();
+                }
+                
                 setResult(mood);
                 setMoodHistory(prev => [{ emoji: mood.emoji, mood: mood.mood, date: getToday() }, ...prev].slice(0, 5));
                 setScreen('result');
