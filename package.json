@@ -1,6 +1,19 @@
 {
+  "name": "barkmoji",
+  "version": "1.0.0",
+  "description": "BarkMoji - AI-powered emoji generator",
+  "scripts": {
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "node backend/index.js",
+    "frontend": "cd frontend && npm run dev",
+    "install-all": "npm install && cd frontend && npm install",
+    "build": "cd frontend && npm run build",
+    "postinstall": "cd frontend && npm install && npm run build",
+    "start": "node backend/index.js"
+  },
   "devDependencies": {
     "autoprefixer": "^10.4.21",
+    "concurrently": "^9.1.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.11"
   },
@@ -11,5 +24,8 @@
     "express": "^5.1.0",
     "sqlite3": "^5.1.7",
     "uuid": "^11.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

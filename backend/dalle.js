@@ -5,9 +5,10 @@ require('dotenv').config();
 const sqlite3 = require('sqlite3').verbose();
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
+const os = require('os');
 
-// Set up SQLite DB
-const dbPath = path.join(__dirname, 'barkmoji_shares.db');
+// Set up SQLite DB - use temp directory for Heroku compatibility
+const dbPath = path.join(os.tmpdir(), 'barkmoji_shares.db');
 const db = new sqlite3.Database(dbPath);
 db.serialize(() => {
   db.run(`CREATE TABLE IF NOT EXISTS shares (
